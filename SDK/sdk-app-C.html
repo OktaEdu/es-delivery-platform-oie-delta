@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="en-us">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>OIE - Okta Embedded Login</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+        crossorigin="anonymous"></script>
+
+    <script src="https://global.oktacdn.com/okta-auth-js/5.10.0/okta-auth-js.min.js" type="text/javascript"></script>
+
+</head>
+
+<body>
+
+    <div id="idx-register" style="display: none;">
+        <b>Register with the following attributes</b>
+        <div id="registrationInputs"></div>
+        <br /><button id="submit-authenticator-form" onclick="performRegistration();"
+            style="background-color: #008CBA; color: white;">Submit</button>
+        <br />
+        <br /><button onclick="performSignOut();" style="background-color: #f44336; color: white;">Close Okta
+            Session</button>
+    </div>
+
+    <div id="idx-selectAuthenticator" style="display: none;">
+        <b>Select Your Authentication Method</b>
+        <div id="authenticatorOptions"></div>
+        <br /><button id="submit-selector-form" onclick="performSelectAuthenticator();"
+            style="background-color: #008CBA; color: white;">Submit</button>
+        <br />
+        <br /><button onclick="performSignOut();" style="background-color: #f44336; color: white;">Close Okta
+            Session</button>
+        <!-- TODO: How do I display the phone number? (Known UX Gap) -->
+    </div>
+
+    <div id="idx-challengeAuthenticator" style="display: none;">
+        <b>You have been challenged (email/password)!</b>
+        <div id="authenticatorInputs"></div>
+        <br /><button id="submit-authenticator-form" onclick="performAuthenticatorResponse();"
+            style="background-color: #008CBA; color: white;">Submit</button>
+        <br />
+        <br /><button onclick="performSignOut();" style="background-color: #f44336; color: white;">Close Okta
+            Session</button>
+        <!-- TODO: How do I resend? -->
+        <!-- TODO: How do I Choose Different Authenticator? -->
+    </div>
+
+    <div id="idx-challengeAuthenticatorPhone" style="display: none;">
+        <b>You have been challenged Via Phone</b>
+        <div id="authenticatorInputsPhone"></div>
+        <br /><button id="submit-authenticator-form" onclick="performResponse();"
+            style="background-color: #008CBA; color: white;">Submit</button>
+        <br />
+        <br /><button onclick="performSignOut();" style="background-color: #f44336; color: white;">Close Okta
+            Session</button>
+        <!-- TODO: How do I resend? -->
+        <!-- TODO: How do I Choose Different Authenticator? -->
+    </div>
+
+    <div id="idx-success" style="display: none;">
+        <b>SUCCESS! You are Authenticated!</b>
+        <div id="content-jwt"></div>
+        <br />
+        <br /><button onclick="performSignOut();" style="background-color: #f44336; color: white;">Close Okta
+            Session</button>
+    </div>
+
+    <div id="idx-error" style="display: none;">
+        <b>Error:</b>
+        <div id="error-message"></div>
+        <br /><button onclick="init();">Start Over</button>
+    </div>
+
+    <div>
+        <br /><a href="index.html">List Apps</a>
+    </div>
+
+    <script type="text/javascript">
+
+        var baseOktaURL = "https://jooie-wf.oktapreview.com";
+        var appClientID = "0oa21e1thyZxfG0pu1d7";
+
+        var config = {
+            issuer: baseOktaURL,                                // OIDC Path
+            // issuer: baseOktaURL + '/oauth2/default',         // Oauth Path
+            clientId: appClientID,
+            // redirectUri: 'https://training.local:8890/sdk-app-A.html',  // Training App Path
+            redirectUri: window.location.protocol + "//" + window.location.hostname + window.location.pathname,  // full Path to this file.
+            scopes: ['openid', 'profile', 'email'],
+            pkce: true,
+            useInteractionCodeFlow: true
+        };
+
+        var authClient = new OktaAuth(config);
+
+        // Utility Functions
+        function displayElements(boxid) {
+            //document.getElementById(boxid).style.visibility="visible";
+            document.getElementById(boxid).style.display = "inline";
+        }
+
+        function hideElements(boxid) {
+            //document.getElementById(boxid).style.visibility="hidden";
+            document.getElementById(boxid).style.display = "none";
+        }
+
+        // Display Messages from IDX State, attempt to get the i18n for language file reference... 
+        function displayMessage(idxState, targetDIV = "message") {
+            // Read object, push message to the Specified DIV
+            if (idxState.messages != null) {
+                var strMessage = idxState.messages[0].message;
+                console.log(strMessage);                // DJM - Default (current) Language
+                document.getElementById(targetDIV).innerHTML = strMessage;
+                try {                                   // DJM get Key 
+                    var strMessageKey = idxState.messages[0].i18n.key;
+                    console.log(strMessageKey);             // DJM - if language key is in use... 
+                } catch (e) {
+                    // do nothing.. 
+                }
+            }
+            else if (idxState.error) {
+                try {
+                    var strMessage = idxState.error.error_description;
+                    document.getElementById(targetDIV).innerHTML = strMessage;
+                    console.log(strMessage);
+                } catch (e) {
+                    // do nothing.. 
+                }
+
+            }
+            else {
+                //todo     
+            }
+        }
+
+        // Display each authenticator option... 
+        function addAuthenticatorOptions(idxState) {
+            console.log("function: addAuthenticatorOptions");
+            //console.log("display: " + idxState.nextStep.options);
+
+            // Show the options in radio format... 
+            const optionsHTML = document.createElement('div');
+            for (const element of idxState.nextStep.options) {
+                optionsHTML.innerHTML += `<div><label for="${element.value}">${element.label}</label> <input id="${element.value}" value="${element.value}" type="radio" name="authenticatorOptions" required /></div>`;
+            }
+            // inject into the "authenticatorOptions" DIV (Purge First)
+            document.getElementById("authenticatorOptions").innerHTML = "";
+            document.getElementById('authenticatorOptions').appendChild(optionsHTML);
+
+        }
+
+
+        // Display each authenticator option... EMAIL & Passsword
+        function addAuthenticatorInputs(idxState) {
+            console.log("function: addAuthenticatorInputs");
+            console.log("display the challenge Prompts");
+
+            // Show the inpute...
+            const optionsHTML = document.createElement('div');
+            for (const element of idxState.nextStep.inputs) {
+                optionsHTML.innerHTML += `<label for="authenticatorResponse">${element.label}</label> <input id="authenticatorResponse" placeholder="${element.name}" type="password" name="${element.name}" required />`;
+            }
+            // inject into the "authenticatorInputs" DIV (Purge First)
+            document.getElementById("authenticatorInputs").innerHTML = "";
+            document.getElementById('authenticatorInputs').appendChild(optionsHTML);
+
+        }
+
+        // Display each authenticator option... EMAIL & Passsword
+        function addEnrollmentInputs(idxState) {
+            console.log("function: addAuthenticatorInputs");
+            console.log("display the challenge Prompts");
+
+            // Show the inpute...
+            const optionsHTML = document.createElement('form');
+            for (const element of idxState.nextStep.inputs) {
+                optionsHTML.innerHTML += `<div class="row g-3 align-items-center"><div class="col-3"><label for="authenticatorResponse" class="col-form-label">${element.label}</label></div> <div class="col-3"><input id="authenticatorResponse_${element.name}" placeholder="${element.name}" type="string" name="${element.name}" class="form-control" required /></div></div>`;
+            }
+            // inject into the "registrationInputs" DIV (Purge First)
+            document.getElementById("registrationInputs").innerHTML = "";
+            document.getElementById('registrationInputs').appendChild(optionsHTML);
+
+        }
+
+        // Display each authenticator option... PHONE
+        function addAuthenticatorInputsPhone(idxState) {
+            console.log("display the challenge Prompts");
+
+            // Show 
+            const optionsHTML = document.createElement('div');
+            const element = idxState.nextStep;
+            optionsHTML.innerHTML += `<label for="authenticatorResponse">${element.authenticator.displayName} ${element.authenticator.profile.phoneNumber}</label> <input id="authenticatorResponse" placeholder="${element.name}" type="input" name="${element.name}" required />`;
+
+            // inject into the "authenticatorInputs" DIV
+            document.getElementById("authenticatorInputsPhone").innerHTML = "";
+            document.getElementById('authenticatorInputsPhone').appendChild(optionsHTML);
+
+        }
+
+
+        // Display each token...
+        function showTokens(idxState) {
+            console.log("function: showTokens");
+
+            // Show the tokens... 
+            const optionsHTML = document.createElement('div');
+            optionsHTML.innerHTML += `<b>Access Token</b><br /><pre>${JSON.stringify(idxState.tokens.accessToken)}</pre><br /><b>ID Token</b><br /><pre>${JSON.stringify(idxState.tokens.idToken)}</pre>`;
+            // inject into the "authenticatorInputs" DIV
+            document.getElementById("content-jwt").innerHTML = "";
+            document.getElementById('content-jwt').appendChild(optionsHTML);
+
+        }
+
+        // Update the view based ont he next step "name"...
+        function updateView(idxState) {
+            // Debug the message in... 
+            console.log(idxState);
+
+            if (idxState.status == "TERMINAL") {
+                // need to start over? 
+                nextStepName = "TERMINAL"
+            } else if (idxState.status == "SUCCESS") {
+                // AuthN Completed... Could be SSO
+                nextStepName = "SUCCESS"
+            } else if (idxState.status == "FAILURE") {
+                // need to start over? 
+                nextStepName = "FAILURE"
+            } else { // more Steps... 
+                nextStepName = idxState.nextStep.name;
+                if (idxState.messages != null) {   //any message returned by idx
+                    displayMessage(idxState, "error-message");
+                    displayElements("idx-error");
+                }
+            }
+            console.log("display: " + nextStepName);
+
+            // Display the view according to the next step...
+            switch (nextStepName) {
+                case "enroll-profile":
+                    //display Registration form
+                    addEnrollmentInputs(idxState);
+                    displayElements("idx-register");
+                    break;
+
+                case "select-authenticator-enroll":
+                    if (idxState.nextStep.canSkip) {
+                        performRegistrationWithSkip();
+                    }
+                    else {
+                        // display the sign-in options... 
+                        displayElements("idx-selectAuthenticator");
+                        // TODO: If only one option... automatically submit & update the View... 
+                        // need function to spin and display into authenticatorOptions
+                        addAuthenticatorOptions(idxState);
+                    }
+                    break;
+
+                case "enroll-authenticator":
+                    displayElements("idx-challengeAuthenticator");
+                    addAuthenticatorInputs(idxState);
+                    break;
+
+                case "TERMINAL":
+                    // display the sign-in options... Can't put handle on why I would get here... Auth session time out?
+                    // Message: 
+                    displayMessage(idxState, "error-message");
+                    displayElements("idx-error");
+                    break;
+
+                case "FAILURE":
+                    // display the sign-in options... Can't put handle on why I would get here... Auth session time out?
+                    displayMessage(idxState, "error-message");
+                    displayElements("idx-error");
+                    break;
+
+                case "SUCCESS":
+                    // display final destination... 
+                    displayElements("idx-success");
+                    showTokens(idxState);
+                    break;
+
+                default:
+                    console.log("View not specified");
+                    break;
+            }
+
+        }
+
+        //Perform "Registration" step
+        var performRegistration = async function () {
+            console.log("Execute performRegistration");
+
+            // options: authenticatorOptions
+            var registrationFormArry = document.querySelectorAll('input[id^="authenticatorResponse_"]');
+
+            let payload = {}
+            for (let i = 0; i < registrationFormArry.length; i++) {
+                if (registrationFormArry[i] !== undefined) {
+                    payload[registrationFormArry[i].name] = registrationFormArry[i].value;
+                }
+            }
+
+            const regTransction = await authClient.idx.register(payload);
+            console.log(regTransction);
+            // update view based on the current state, but first first hide... 
+            hideElements("idx-register");
+            updateView(regTransction);
+        }
+
+        //Perform "Registration with Skip" step
+        var performRegistrationWithSkip = async function () {
+            console.log("Execute performRegistrationWithSkip");
+            const regTransction = await authClient.idx.register({ skip: true });
+            console.log(regTransction);
+            // update view based on the current state, but first first hide... 
+            hideElements("idx-register");
+            updateView(regTransction);
+        }
+
+
+        // Perform the "Select Authenticator" step
+        var performSelectAuthenticator = async function () {
+            console.log("Execute performSelectAuthenticator");
+            // Get the "next steps" for the user + application context
+
+            // Get Selected authenticator... 
+            // options: authenticatorOptions
+            const rbs = document.querySelectorAll('input[name="authenticatorOptions"]');
+            let selectedAuthenticator;
+            for (const rb of rbs) {
+                if (rb.checked) {
+                    selectedAuthenticator = rb.value;
+                    break;
+                }
+            }
+            // Send the Identifier selected to Okta... 
+            const regTransaction = await authClient.idx.register({ authenticator: selectedAuthenticator });
+            console.log(regTransaction);
+            // update view based on the current state, but first first hide... 
+            hideElements("idx-selectAuthenticator");
+            updateView(regTransaction);
+
+        }
+
+        // Perform the "Authenticator Response" step
+        var performAuthenticatorResponse = async function () {
+            console.log("Execute performAuthenticatorResponse");
+            // Get the "next steps" for the user + application context
+
+            // Get User's Response... 
+            // Field name: authenticatorResponse
+            var authenticatorName = document.getElementById("authenticatorResponse").name;
+
+            switch (authenticatorName) {
+                case "password":
+                    var authenticatorResponse = document.getElementById("authenticatorResponse").value;
+                    regTransaction = await authClient.idx.register({ password: authenticatorResponse });
+                    console.log(regTransaction);
+                    // update view based on the current state, but first first hide... 
+                    hideElements("idx-challengeAuthenticator");
+                    // Cleanup 
+                    updateView(regTransaction);
+
+                    break;
+
+                case "verificationCode":
+                    var authenticatorResponse = parseInt(document.getElementById("authenticatorResponse").value);
+                    regTransaction = await authClient.idx.register({ verificationCode: authenticatorResponse });
+                    console.log(regTransaction);
+                    // update view based on the current state, but first first hide... 
+                    hideElements("idx-challengeAuthenticator");
+                    // Cleanup 
+                    updateView(regTransaction);
+
+                    break;
+
+                default:
+                    console.log("Authenticator not implemented");
+                    break;
+            }
+        }
+
+        // Perform the "Authenticator Response" step
+        var performSignOut = async function () {
+            console.log("Execute performSignOut");
+            // Get the "next steps" for the user + application context
+            
+            // Close the Okta Session
+            authClient.closeSession();
+
+            // Cancel any existing flows
+            authClient.idx.cancel();
+
+            //revoke refresh token
+            authClient.revokeRefreshToken();
+
+            // Refresh the Authentication Session... 
+            const initialIdxState = await authClient.idx.register();
+            // update view based on the current state
+            updateView(initialIdxState);
+
+            // clean up UX (hide the previous token) 
+            hideElements("idx-success");
+            hideElements("idx-error");
+
+            // Cleanup 
+            updateView(initialIdxState);
+
+        }
+
+        // This is the intial step, to get the sign-in options... 
+        var init = async function () {
+            // Make sure start with UX (if inflight)
+            hideElements("idx-success");
+            hideElements("idx-error");
+
+            const initialIdxState = await authClient.idx.register();
+            // update view based on the current state
+            updateView(initialIdxState);
+        }
+
+        // Fire the initialization... note this will catch in-flight authentication flows...
+        init();
+
+    </script>
+</body>
+
+</html>

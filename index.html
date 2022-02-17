@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<body>
+<a id="top"></a>
+<h1><font face="arial" color="00297A">OKTA SAMPLE APPLICATIONS</font></h1>
+
+<hr>
+
+<font face="arial" size="2">
+<table width="100%">
+<tr>
+<td>
+<b> QUICKLINKS</b><br>
+<a href="#redirect">Okta Hosted SIW</a><br>
+<a href="#embedded">Customer Hosted SIW</a><br>
+<a href="#sdk">Embedded SDK</a><br>
+<a href="Okta_CIAM_Core_Lab_Guide.pdf">Core Lab Guide</a>
+</td>
+<td>
+<! -------------------------------------------------------------------------------------------------- !>
+<! CHANGE REQUIRED: Include your preview org tenant URL in the designated area labeled --yourdomain-- !>
+<! -------------------------------------------------------------------------------------------------- !>
+<a href="https://--yourdomain--/login/signout">Okta Login/Signout [DIRECT]<br>
+<a href="http://--yourdomain--/admin/dashboard">Okta Admin Dashboard [OIE URI]</a>
+</td>
+</tr>
+</table>
+<br>
+<hr>
+<font size="3"><b><a id="redirect">Okta Hosted Sign-In Widget (SIW) - <i>Redirect Authentication Model</i></a></b></font>
+<font size="2">
+<table width="100%">
+<tr>
+<td><center><a href="redirect/oidc-appredirect-A.html"><img src="images/passwordless.png"><br>APP A:<br>Passwordless Authentication <br> (e-mail magic link)</a></td>
+<td><center><a href="redirect/oidc-appredirect-B.html"><img src="images/bookmark.png"><br>APP B:<br>App Level Policy using <br> Knowledge and Possession Factors <br> Email + Password or Social</a></td>
+<td><center><a href="redirect/oidc-appredirect-C.html"><img src="images/signup.png"><br>APP C:<br>Profile Enrollment Policy</a></td>
+<td><center><a href="redirect/oidc-appredirect-D.html"><img src="images/factors.png"><br>APP D:<br>Authenticate using <br> "Any 2 Factor Types"</a></td>
+</tr>
+</table>
+</font>
+<br>
+<hr>
+<font size="3"><b><a id="embedded">Customer Hosted Sign-In Widget (SIW) - <i>Embedded Authentication Model</i></a></b></font> <font size="2"> <a href="#top"> [Back to top]</a>
+<table width="100%">
+<tr>
+<td><center><a href="embedded/widget-appembed-A.html"><img src="images/passwordless.png"><br>APP A:<br>Passwordless Authentication <br> (e-mail magic link)</a></td>
+<td><center><a href="embedded/widget-appembed-B.html"><img src="images/bookmark.png"><br>APP B:<br>App Level Policy using <br> Knowledge and Possession Factors <br> Email + Password or Social</a></td>
+<td><center><a href="embedded/widget-appembed-C.html"><img src="images/signup.png"><br>APP C:<br>Profile Enrollment Policy</a></td>
+<td><center><a href="embedded/widget-appembed-D.html"><img src="images/factors.png"><br>APP D:<br>Authenticate using <br> "Any 2 Factor Types"</a></td>
+</tr>
+</table>
+</font>
+<br>
+<hr>
+<font size="3"><b><a id="sdk">Embedded SDK Authentication Model</i></a></font></b> <font size="2"> <a href="#top"> [Back to top]</a>
+<font size="2">
+<table width="100%">
+<tr>
+<td colspan=2><center><h3>Sign-In - "Up-Front Model"</h3></td>
+</tr>
+<tr>
+<td><center><img src="images/userpass.png"><br><a href="sdk/sdk-spa-upfront-login-password.html">APP A: Username and Password</a></td>
+<td><center><img src="images/passwordless.png"><a href="sdk/sdk-spa-upfront-login-email.html"><br>APP B: Passwordless Authentication</a></td>
+</tr>
+<tr>
+<td colspan=2><center><hr><h3>Sign-In - "On-Demand Model"</h3></td>
+</tr>
+<tr>
+<td><center><img src="images/passwordless.png"><br><a href="sdk/sdk-app-A.html">APP A: Passwordless Authentication</a></td>
+<td><center><img src="images/bookmark.png"><br><a href="sdk/sdk-app-B.html">APP B: Group Based App Sign-On Policy <br> Password + Any Factor <br> Any Factor Type <br> Any 2 Factor Types</a></td>
+</tr>
+<tr>
+<td colspan=2><center><hr><h3>Profile Enrollment</h3></td>
+</tr>
+<tr>
+<td><center><img src="images/signup.png"><br><a href="sdk/sdk-app-A-signup.html">APP A: Sign-Up <br> using First and Last Name and Email</a></td>
+<td><center><img src="images/signup.png"><br><a href="sdk/sdk-app-C.html">APP C: Sign-Up <br> using Custom Attribute</a></td>
+</tr>
+<tr>
+<td colspan=2><center><hr><h3>Social Authentication and Password Recovery</h3></td>
+</tr>
+
+<tr>
+<td><center><img src="images/social.png"><br><a href="sdk/sdk-app-B-social.html">APP B: Social Authentication</a></td>
+<td><center><img src="images/signup.png"><br><a href="sdk/sdk-app-D-recovery.html">APP D: Password Recovery</a></td>
+</tr>
+</table>
+<br>
+<center><a href="#top">[Back to top]</a></center>
+</font>
+<hr>
+<h6><u>DISCLAIMER</u><br> THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR   OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,ARISING FROM,OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.  <BR> All sample code is provided for training purposes only and should only be used in testing or training network environments.</h6> 
+
+<font face="arial">
+<font size=1>Our goal is to help developers understand how to implement Okta features focused on authentication, registration and password recovery. Once you gain an understanding of configurations, code samples and idx APIs, you can write functions tailored to your specific use cases.</font>
+
+
+</body>
+</html>
